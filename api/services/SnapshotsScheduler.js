@@ -7,7 +7,8 @@ var semver = require('semver');
 var KongService = require('./KongService')
 var SnapshotsService = require('./SnapshotsService');
 var Utils = require('../helpers/utils');
-
+let OSS = require("ali-oss");
+const fs = require("fs");
 module.exports = {
 
   add: function (schedule) {
@@ -33,8 +34,60 @@ module.exports = {
 
             sails.log.error("SnapshotScheduler:Running scheduled task", "Fetch node", node);
 
-            SnapshotsService.takeSnapShot(null, node, function (err, ok) {
-
+            SnapshotsService.takeSnapShot(null, node, function (err, created) {
+              const {
+                oss_region,
+                oss_accessKeyId,
+                oss_accessKeySecret,
+                oss_bucket
+              } = process.env;
+              if (
+                created &&
+                oss_region &&
+                oss_accessKeyId &&
+                oss_accessKeySecret &&
+                oss_bucket
+              ) {
+                let client = new OSS({
+                  region: oss_region,
+                  accessKeyId: oss_accessKeyId,
+                  accessKeySecret: oss_accessKeySecret,
+                  bucket: oss_bucket
+                });
+                var location =
+                  sails.config.paths.uploads +
+                  "snapshot_" +
+                  created.id +
+                  ".json";
+                async function put() {
+                  try {
+                    let result = await client.put(
+                      "/kong-config-snapshot/" + created.name + ".json",
+                      location
+                    );
+                    console.log(result);
+                  } catch (e) {
+                    console.log(er);
+                  }
+                }
+                fs.writeFile(
+                  location,
+                  JSON.stringify(created),
+                  "utf8",
+                  function(err, file) {
+                    if (err) return;
+                    put();
+                  }
+                );
+              } else {
+                console.log(
+                  "XXXXXXXXX==>",
+                  oss_region,
+                  oss_accessKeyId,
+                  oss_accessKeySecret,
+                  oss_bucket
+                );
+              }
             });
 
           });

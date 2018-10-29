@@ -226,6 +226,8 @@ module.exports = {
                       name: node.name + "@" + Date.now()
                     }
                   });
+                } else {
+                  cb(null, created);
                 }
 
               });
@@ -244,6 +246,8 @@ module.exports = {
                     name: node.name + "@" + Date.now()
                   }
                 });
+              } else {
+                cb(null, created);
               }
 
             });
