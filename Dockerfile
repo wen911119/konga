@@ -1,5 +1,5 @@
 FROM node:8.11-alpine
-
+ENV TZ="Asia/Shanghai"
 COPY . /app
 
 WORKDIR /app
